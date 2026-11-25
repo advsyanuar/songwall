@@ -9,8 +9,8 @@ import {
   TrashIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   Item,
   ItemActions,
@@ -18,8 +18,8 @@ import {
   ItemDescription,
   ItemMedia,
   ItemTitle,
-} from "@/components/ui/item";
-import type { Song, SongId } from "@/types/song";
+} from "../components/ui/item";
+import type { Song, SongId } from "../types/song";
 
 type DragEndHandler = NonNullable<
   ComponentProps<typeof DragDropProvider>["onDragEnd"]
@@ -77,8 +77,8 @@ const Sortable = ({ id, index, song, onRemove, onUpdate }: SortableProps) => {
               <div className="flex flex-wrap items-center gap-2">
                 <Input
                   value={titleDraft}
-                  onChange={(e) => setTitleDraft(e.target.value)}
-                  onKeyDown={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === "Enter") saveEditing();
                     if (e.key === "Escape") cancelEditing();
                   }}
@@ -87,8 +87,8 @@ const Sortable = ({ id, index, song, onRemove, onUpdate }: SortableProps) => {
                 />
                 <Input
                   value={artistDraft}
-                  onChange={(e) => setArtistDraft(e.target.value)}
-                  onKeyDown={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setArtistDraft(e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === "Enter") saveEditing();
                     if (e.key === "Escape") cancelEditing();
                   }}
