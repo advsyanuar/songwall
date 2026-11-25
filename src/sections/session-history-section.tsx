@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import type { SessionHistory } from "@/types/song";
+import { Badge } from "../components/ui/badge";
+import type { SessionHistory } from "../types/song";
 
 type SessionHistorySectionProps = {
   sessions: SessionHistory[];

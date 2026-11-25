@@ -23,3 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 supabase-jam-sess-pass.txt
+db.json

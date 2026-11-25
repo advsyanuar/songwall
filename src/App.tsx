@@ -6,22 +6,22 @@ import {
   PlusCircleIcon,
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "./components/ui/button";
+import { Calendar } from "./components/ui/calendar";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSessionHistory } from "@/hooks/useSessionHistory";
-import { useTracklist } from "@/hooks/useTracklist";
-import { AddSongsPage } from "@/pages/add-songs-page";
-import { SessionHistorySection } from "@/sections/session-history-section";
-import TracklistSection from "@/sections/tracklist-section";
+} from "./components/ui/input-group";
+import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover";
+import { ScrollArea } from "./components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { useSessionHistory } from "./hooks/useSessionHistory";
+import { useTracklist } from "./hooks/useTracklist";
+import { AddSongsPage } from "./pages/add-songs-page";
+import { SessionHistorySection } from "./sections/session-history-section";
+import TracklistSection from "./sections/tracklist-section";
 
 function formatDate(date: Date | undefined) {
   if (!date) return "";

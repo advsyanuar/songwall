@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { NewSong, Song, SongId, UpdateSongPayload } from "@/types/song";
-import { createClient } from "@/lib/supabase/client";
+import type { NewSong, Song, SongId, UpdateSongPayload } from "../types/song";
+import { createClient } from "../lib/supabase/client";
 
 export const TRACKLIST_QUERY_KEY = ["tracklist"] as const;
 

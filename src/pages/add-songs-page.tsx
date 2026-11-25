@@ -6,8 +6,8 @@ import {
   PlusCircleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -15,9 +15,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { bands } from "@/constants/bands";
-import { useTracklist } from "@/hooks/useTracklist";
+} from "../components/ui/select";
+import { bands } from "../constants/bands";
+import { useTracklist } from "../hooks/useTracklist";
 
 type SongRowDraft = {
   key: number;
