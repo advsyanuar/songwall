@@ -59,9 +59,6 @@ function TracklistHomePage() {
     isSaving,
   } = useSessionHistory();
 
-  const bandsSelected = new Set(
-    songs.map((song) => song.artist).filter(Boolean)
-  );
   const songCounts = songs.length;
 
   const handleSaveSession = () => {
