@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { SessionHistory, SessionSong, Song } from "@/types/song";
-import { createClient } from "@/lib/supabase/client";
+import type { SessionHistory, SessionSong, Song } from "../types/song";
+import { createClient } from "../lib/supabase/client";
 
 export const SESSION_HISTORY_QUERY_KEY = ["session-history"] as const;
 
