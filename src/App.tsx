@@ -161,7 +161,7 @@ function TracklistHomePage() {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
-                variant="default"
+                variant="secondary"
                 size="sm"
                 className="w-full sm:w-auto"
                 disabled={isSaving || songs.length === 0 || !date}

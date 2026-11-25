@@ -14,6 +14,11 @@ const supabase = createClient();
 function sortTracklist(songs: Song[]): Song[] {
   return songs
     .map((song, index) => ({ song, index }))
+    .sort((a, b) => {
+      const orderA = a.song.order ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.song.order ?? Number.MAX_SAFE_INTEGER;
+      return orderA !== orderB ? orderA - orderB : a.index - b.index;
+    })
     .map(({ song }) => song);
 }
 
@@ -87,7 +92,7 @@ export const useTracklist = () => {
         album_image_link: s.album_image_link ?? null,
         order: s.order ?? nextOrder++,
       }));
-      console.log("rows", rows);
+
       const { data, error } = await supabase
         .from("tracklist")
         .insert(rows)
@@ -126,23 +131,37 @@ export const useTracklist = () => {
     onSuccess: invalidateTracklist,
   });
 
-  const reorderSongsMutation = useMutation({
-    mutationFn: async ({ fromIndex, toIndex }: ReorderSongsPayload) => {
-      const currentSongs =
+  const reorderSongsMutation = useMutation<
+    Song[],
+    Error,
+    ReorderSongsPayload,
+    { previousSongs: Song[] }
+  >({
+    onMutate: async ({ fromIndex, toIndex }) => {
+      await queryClient.cancelQueries({ queryKey: TRACKLIST_QUERY_KEY });
+      const previousSongs =
         queryClient.getQueryData<Song[]>(TRACKLIST_QUERY_KEY) ?? [];
 
       if (
         fromIndex === toIndex ||
         fromIndex < 0 ||
         toIndex < 0 ||
-        fromIndex >= currentSongs.length ||
-        toIndex >= currentSongs.length
+        fromIndex >= previousSongs.length ||
+        toIndex >= previousSongs.length
       ) {
-        return currentSongs;
+        return { previousSongs };
       }
 
-      const reordered = moveItem(currentSongs, fromIndex, toIndex);
-      const changed = reordered
+      const reordered = moveItem(previousSongs, fromIndex, toIndex);
+      queryClient.setQueryData<Song[]>(TRACKLIST_QUERY_KEY, reordered);
+
+      return { previousSongs };
+    },
+    mutationFn: async () => {
+      const currentSongs =
+        queryClient.getQueryData<Song[]>(TRACKLIST_QUERY_KEY) ?? [];
+
+      const changed = currentSongs
         .map((song, index) => ({ song, nextOrder: index }))
         .filter(({ song, nextOrder }) => song.order !== nextOrder);
 
@@ -158,9 +177,22 @@ export const useTracklist = () => {
         )
       );
 
-      return reordered.map((song, index) => ({ ...song, order: index }));
+      const synced = currentSongs.map((song, index) => ({
+        ...song,
+        order: index,
+      }));
+      queryClient.setQueryData<Song[]>(TRACKLIST_QUERY_KEY, synced);
+      return synced;
     },
-    onSuccess: invalidateTracklist,
+    onError: (_error, _variables, context) => {
+      if (context?.previousSongs) {
+        queryClient.setQueryData<Song[]>(
+          TRACKLIST_QUERY_KEY,
+          context.previousSongs
+        );
+      }
+    },
+    onSettled: invalidateTracklist,
   });
 
   return {
