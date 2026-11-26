@@ -68,9 +68,9 @@ function TracklistHomePage() {
   };
 
   return (
-    <div className="mx-auto min-h-screen max-w-5xl p-4 sm:p-6 md:p-8">
+    <div className="mx-auto min-h-screen max-w-5xl p-4 sm:p-6 md:p-8 print:p-0">
       <Tabs defaultValue="new-session" className="w-full">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
           <TabsList className="w-full sm:w-fit">
             <TabsTrigger value="new-session">New Session</TabsTrigger>
             <TabsTrigger value="session-history">Session History</TabsTrigger>
@@ -172,7 +172,7 @@ function TracklistHomePage() {
             </div>
           </div>
 
-          <ScrollArea className="h-[65vh] w-full border p-3 sm:h-150 sm:p-4">
+          <ScrollArea className="h-[65vh] w-full border sm:h-150">
             {isLoading ? (
               <p className="text-sm text-muted-foreground">
                 Loading tracklist...
@@ -195,8 +195,8 @@ function TracklistHomePage() {
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="session-history" className="mt-4">
-          <ScrollArea className="h-[70vh] w-full border p-3 sm:h-150 sm:p-4">
+        <TabsContent value="session-history" className="mt-4 print:mt-0">
+          <ScrollArea className="h-[70vh] w-full border p-3 sm:h-150 sm:p-4 print:h-auto print:overflow-visible print:border-0 print:p-0">
             <SessionHistorySection
               sessions={sessions}
               isLoading={isLoadingSessions}

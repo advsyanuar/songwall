@@ -11,6 +11,8 @@ function songsToSnapshot(songs: Song[]): SessionSong[] {
     title: song.title,
     artist: song.artist,
     album: song.album,
+    album_image_link: song.album_image_link,
+    lyrics_url: song.lyrics_url,
     order: song.order ?? index,
   }));
 }

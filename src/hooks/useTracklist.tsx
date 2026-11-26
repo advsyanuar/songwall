@@ -64,6 +64,7 @@ export const useTracklist = () => {
           artist: newSong.artist,
           album: newSong.album ?? null,
           album_image_link: newSong.album_image_link ?? null,
+          lyrics_url: newSong.lyrics_url ?? null,
           order: newSong.order ?? maxOrder + 1,
         })
         .select()
@@ -90,6 +91,7 @@ export const useTracklist = () => {
         artist: s.artist,
         album: s.album ?? null,
         album_image_link: s.album_image_link ?? null,
+        lyrics_url: s.lyrics_url ?? null,
         order: s.order ?? nextOrder++,
       }));
 

@@ -10,7 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+.env.local
+.env.prod
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +25,4 @@ dist-ssr
 *.sw?
 supabase-jam-sess-pass.txt
 db.json
+tasks.md

@@ -19,6 +19,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "../components/ui/item";
+import { lookupGeniusSong } from "../hooks/useGeniusSearch";
 import type { Song, SongId } from "../types/song";
 
 type DragEndHandler = NonNullable<
@@ -31,9 +32,17 @@ type SortableProps = {
   song: Song;
   onRemove?: (id: SongId) => void;
   onUpdate?: (id: SongId, updates: Partial<Omit<Song, "id">>) => void;
+  onOpenLyrics: (song: Song) => void;
 };
 
-const Sortable = ({ id, index, song, onRemove, onUpdate }: SortableProps) => {
+const Sortable = ({
+  id,
+  index,
+  song,
+  onRemove,
+  onUpdate,
+  onOpenLyrics,
+}: SortableProps) => {
   const { ref, handleRef, isDragging } = useSortable({ id, index });
   const [isEditing, setIsEditing] = useState(false);
   const [titleDraft, setTitleDraft] = useState(song.title);
@@ -66,18 +75,31 @@ const Sortable = ({ id, index, song, onRemove, onUpdate }: SortableProps) => {
       ref={ref}
       variant="outline"
       size="sm"
-      className={isDragging ? "opacity-60" : undefined}
+      className={`${isDragging ? "opacity-60 " : ""}${!isEditing ? "cursor-pointer hover:bg-muted/40" : ""}`}
       render={
-        <li>
-          <ItemMedia>
-            <DiscIcon className="size-5" />
+        <li
+          onClick={() => {
+            if (!isEditing) onOpenLyrics(song);
+          }}
+        >
+          <ItemMedia variant={song.album_image_link ? "image" : "default"}>
+            {song.album_image_link ? (
+              <img src={song.album_image_link} alt={song.title} />
+            ) : (
+              <DiscIcon className="size-5" />
+            )}
           </ItemMedia>
           <ItemContent>
             {isEditing ? (
-              <div className="flex flex-wrap items-center gap-2">
+              <div
+                className="flex flex-wrap items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Input
                   value={titleDraft}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitleDraft(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setTitleDraft(e.target.value)
+                  }
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === "Enter") saveEditing();
                     if (e.key === "Escape") cancelEditing();
@@ -87,7 +109,9 @@ const Sortable = ({ id, index, song, onRemove, onUpdate }: SortableProps) => {
                 />
                 <Input
                   value={artistDraft}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setArtistDraft(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setArtistDraft(e.target.value)
+                  }
                   onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === "Enter") saveEditing();
                     if (e.key === "Escape") cancelEditing();
@@ -101,11 +125,14 @@ const Sortable = ({ id, index, song, onRemove, onUpdate }: SortableProps) => {
                 <ItemTitle className="text-base font-bold">
                   {index + 1} - {song.title}
                 </ItemTitle>
-                <ItemDescription>{song.artist}</ItemDescription>
+                <ItemDescription>
+                  {song.artist}
+                  {song.album ? ` · ${song.album}` : ""}
+                </ItemDescription>
               </>
             )}
           </ItemContent>
-          <ItemActions>
+          <ItemActions onClick={(e) => e.stopPropagation()}>
             <span
               ref={handleRef}
               aria-label="Drag to reorder"
@@ -174,6 +201,39 @@ const TracklistSection = ({
   onUpdate,
   onReorder,
 }: TracklistSectionProps) => {
+  const handleOpenLyrics = async (song: Song) => {
+    if (song.lyrics_url) {
+      window.open(song.lyrics_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const popup = window.open("about:blank", "_blank");
+    try {
+      const hit = await lookupGeniusSong(song.title, song.artist);
+      if (!hit?.lyrics_url) {
+        popup?.close();
+        return;
+      }
+
+      if (popup) {
+        popup.opener = null;
+        popup.location.href = hit.lyrics_url;
+      } else {
+        window.open(hit.lyrics_url, "_blank", "noopener,noreferrer");
+      }
+
+      onUpdate?.(song.id, {
+        lyrics_url: hit.lyrics_url,
+        ...(hit.album ? { album: hit.album } : {}),
+        ...(hit.album_image_link
+          ? { album_image_link: hit.album_image_link }
+          : {}),
+      });
+    } catch {
+      popup?.close();
+    }
+  };
+
   const handleDragEnd: DragEndHandler = (event) => {
     if (event.canceled) return;
     const { source } = event.operation;
@@ -197,6 +257,7 @@ const TracklistSection = ({
             song={song}
             onRemove={onRemove}
             onUpdate={onUpdate}
+            onOpenLyrics={(s) => void handleOpenLyrics(s)}
           />
         ))}
       </ul>

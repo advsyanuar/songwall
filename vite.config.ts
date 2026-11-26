@@ -10,5 +10,14 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),
     },
+  },
+  server: {
+    proxy: {
+      '/api/genius': {
+        target: 'https://api.genius.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/genius/, ''),
+      }
+    }
   }
 })

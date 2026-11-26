@@ -6,36 +6,34 @@ import {
   PlusCircleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
+import { ArtistAutocomplete } from "../components/artist-autocomplete";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import { bands } from "../constants/bands";
+import { lookupGeniusSong } from "../hooks/useGeniusSearch";
 import { useTracklist } from "../hooks/useTracklist";
 
 type SongRowDraft = {
   key: number;
   title: string;
-  band: string;
+  artist: string;
 };
 
 export function AddSongsPage() {
   const navigate = useNavigate();
   const { addSongs, isAddingBatch } = useTracklist();
+
   const [rows, setRows] = useState<SongRowDraft[]>([
-    { key: 1, title: "", band: "green-day" },
+    { key: 1, title: "", artist: "Green Day" },
   ]);
   const [nextKey, setNextKey] = useState(2);
+  const [isResolvingLyrics, setIsResolvingLyrics] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const addRow = () => {
-    setRows((prev) => [...prev, { key: nextKey, title: "", band: "green-day" }]);
+    setRows((prev) => [
+      ...prev,
+      { key: nextKey, title: "", artist: "Green Day" },
+    ]);
     setNextKey((k) => k + 1);
   };
 
@@ -45,33 +43,53 @@ export function AddSongsPage() {
     );
   };
 
-  const updateRow = (key: number, patch: Partial<Omit<SongRowDraft, "key">>) => {
+  const updateRow = (
+    key: number,
+    patch: Partial<Omit<SongRowDraft, "key">>
+  ) => {
     setRows((prev) =>
       prev.map((row) => (row.key === key ? { ...row, ...patch } : row))
     );
   };
 
   const validRows = rows.filter((row) => row.title.trim().length > 0);
+  const isSubmitting = isResolvingLyrics || isAddingBatch;
 
-  const handleSaveAll = () => {
-    if (validRows.length === 0) return;
+  const handleSaveAll = async () => {
+    if (validRows.length === 0 || isSubmitting) return;
     setSubmitError(null);
+    setIsResolvingLyrics(true);
 
-    const payload = validRows.map((row) => ({
-      title: row.title.trim(),
-      artist: bands.find((b) => b.value === row.band)?.label ?? row.band,
-    }));
+    try {
+      const payload = await Promise.all(
+        validRows.map(async (row) => {
+          const title = row.title.trim();
+          const artist = row.artist.trim() || "Unknown Artist";
+          const hit = await lookupGeniusSong(title, artist).catch(() => null);
 
-    addSongs(payload, {
-      onSuccess: () => {
-        navigate("/");
-      },
-      onError: (err) => {
-        setSubmitError(
-          err instanceof Error ? err.message : "Failed to save songs"
-        );
-      },
-    });
+          return {
+            title,
+            artist,
+            album: hit?.album,
+            album_image_link: hit?.album_image_link,
+            lyrics_url: hit?.lyrics_url,
+          };
+        })
+      );
+
+      addSongs(payload, {
+        onSuccess: () => {
+          navigate("/");
+        },
+        onError: (err) => {
+          setSubmitError(
+            err instanceof Error ? err.message : "Failed to save songs"
+          );
+        },
+      });
+    } finally {
+      setIsResolvingLyrics(false);
+    }
   };
 
   return (
@@ -103,26 +121,11 @@ export function AddSongsPage() {
               className="flex-1"
               onChange={(e) => updateRow(row.key, { title: e.target.value })}
             />
-            <Select
-              items={bands}
-              value={row.band}
-              onValueChange={(value) => {
-                if (value) updateRow(row.key, { band: value });
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Band" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {bands.map((band) => (
-                    <SelectItem key={band.value} value={band.value}>
-                      {band.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <ArtistAutocomplete
+              value={row.artist}
+              onChange={(artist) => updateRow(row.key, { artist })}
+              className="w-full sm:w-52"
+            />
             <Button
               type="button"
               variant="destructive"
@@ -158,11 +161,11 @@ export function AddSongsPage() {
           variant="default"
           size="sm"
           className="w-full sm:w-auto"
-          disabled={validRows.length === 0 || isAddingBatch}
-          onClick={handleSaveAll}
+          disabled={validRows.length === 0 || isSubmitting}
+          onClick={() => void handleSaveAll()}
         >
           <FloppyDiskIcon />{" "}
-          {isAddingBatch
+          {isSubmitting
             ? "Saving..."
             : `Save ${validRows.length || ""} Song${validRows.length === 1 ? "" : "s"}`}
         </Button>
