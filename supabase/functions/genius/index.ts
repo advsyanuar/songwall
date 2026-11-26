@@ -129,7 +129,7 @@ const handler = withSupabase(
 export default {
   fetch: async (req: Request) => {
     if (req.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return new Response("ok", { status: 200, headers: corsHeaders });
     }
     const res = await handler(req);
     const nextHeaders = new Headers(res.headers);
