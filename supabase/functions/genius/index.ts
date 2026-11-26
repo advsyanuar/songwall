@@ -4,6 +4,17 @@ import { withSupabase } from "@supabase/server";
 
 const GENIUS_API_BASE = "https://api.genius.com";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(body: unknown, status = 200) {
+  return Response.json(body, { status, headers: corsHeaders });
+}
+
 type GeniusArtist = {
   name?: string;
 };
@@ -41,13 +52,19 @@ function mapGeniusSong(song: GeniusSongResult) {
   };
 }
 
-export default {
-  fetch: withSupabase({ auth: ["publishable", "secret"] }, async (req) => {
-    const accessToken = Deno.env.get("GENIUS_ACCESS_TOKEN");
+const handler = withSupabase(
+  { auth: ["publishable", "secret"] },
+  async (req) => {
+    const denoEnv = (
+      globalThis as {
+        Deno?: { env?: { get(key: string): string | undefined } };
+      }
+    ).Deno?.env;
+    const accessToken = denoEnv?.get("GENIUS_ACCESS_TOKEN");
     if (!accessToken) {
-      return Response.json(
+      return jsonResponse(
         { error: "GENIUS_ACCESS_TOKEN secret is not configured" },
-        { status: 500 }
+        500
       );
     }
 
@@ -67,9 +84,9 @@ export default {
         { headers }
       );
       if (!res.ok) {
-        return Response.json(
+        return jsonResponse(
           { error: `Genius API error (${res.status})` },
-          { status: res.status }
+          res.status
         );
       }
       const json = (await res.json()) as {
@@ -77,14 +94,14 @@ export default {
       };
       const song = json.response?.song;
       if (!song) {
-        return Response.json({ error: "Song not found" }, { status: 404 });
+        return jsonResponse({ error: "Song not found" }, 404);
       }
-      return Response.json({ song: mapGeniusSong(song) });
+      return jsonResponse({ song: mapGeniusSong(song) });
     }
 
     const query = body.query?.trim();
     if (!query) {
-      return Response.json({ hits: [] });
+      return jsonResponse({ hits: [] });
     }
 
     const res = await fetch(
@@ -92,9 +109,9 @@ export default {
       { headers }
     );
     if (!res.ok) {
-      return Response.json(
+      return jsonResponse(
         { error: `Genius API error (${res.status})` },
-        { status: res.status }
+        res.status
       );
     }
 
@@ -105,6 +122,26 @@ export default {
       .filter((hit) => hit.type === "song")
       .map((hit) => mapGeniusSong(hit.result));
 
-    return Response.json({ hits });
-  }),
+    return jsonResponse({ hits });
+  }
+);
+
+export default {
+  fetch: async (req: Request) => {
+    if (req.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+    const res = await handler(req);
+    const nextHeaders = new Headers(res.headers);
+    for (const [key, value] of Object.entries(corsHeaders)) {
+      if (!nextHeaders.has(key)) {
+        nextHeaders.set(key, value);
+      }
+    }
+    return new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: nextHeaders,
+    });
+  },
 };
